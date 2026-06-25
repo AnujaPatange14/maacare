@@ -1,0 +1,9 @@
+node_modules/
+server/node_modules/
+server/data/
+dist/
+.expo/
+.env
+.env.local
+*.db
+.vscode/

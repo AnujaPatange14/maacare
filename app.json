@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "MaaCare",
+    "slug": "maacare",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#E8D5FF"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E8D5FF"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "name": "MaaCare",
+      "shortName": "MaaCare",
+      "description": "Gentle routines for growing hearts — child habit tracking for parents",
+      "themeColor": "#7C5CFC",
+      "backgroundColor": "#FAFAFE"
+    }
+  }
+}
