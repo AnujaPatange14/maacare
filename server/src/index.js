@@ -19,6 +19,10 @@ if (isProduction && (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'maac
 app.set('trust proxy', 1);
 
 const corsOrigin = process.env.CORS_ORIGIN || '*';
+
+console.log('NODE_ENV =', process.env.NODE_ENV);
+console.log('CORS_ORIGIN =', process.env.CORS_ORIGIN);
+console.log('Using CORS origin =', corsOrigin);
 app.use(cors({
   origin: corsOrigin === '*' ? true : corsOrigin.split(',').map(s => s.trim()),
   credentials: true,
