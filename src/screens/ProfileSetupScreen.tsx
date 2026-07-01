@@ -8,6 +8,8 @@ import {
   Image,
   Alert,
 } from 'react-native';
+import { AvatarCard } from '../components/AvatarCard';
+import { avatars } from '../data/dummyData';
 import { CustomButton } from '../components/CustomButton';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { colors } from '../theme/colors';
@@ -39,6 +41,10 @@ export const ProfileSetupScreen: React.FC = ({ navigation }: any) => {
           photoUri,
         });
         setSelectedAvatar(null);
+        navigation.reset({
+  index: 0,
+  routes: [{ name: 'MainTabs' }],
+});
       
       } catch {
         Alert.alert('Error', 'Could not save profile. Please try again.');
@@ -70,6 +76,7 @@ export const ProfileSetupScreen: React.FC = ({ navigation }: any) => {
         const uri = asset.base64
           ? `data:image/jpeg;base64,${asset.base64}`
           : asset.uri;
+        setSelectedAvatar(null);
         setPhotoUri(uri);
       }
     } catch {
@@ -142,7 +149,27 @@ export const ProfileSetupScreen: React.FC = ({ navigation }: any) => {
           </View>
         )}
       </View>
+     <Text style={styles.orText}>
+──────── OR ────────
+</Text>
 
+<Text style={styles.label}>
+Choose an Avatar
+</Text>
+
+<View style={styles.avatarGrid}>
+  {avatars.map(avatar => (
+    <AvatarCard
+      key={avatar.id}
+      avatar={avatar}
+      isSelected={selectedAvatar?.id === avatar.id}
+      onPress={() => {
+        setPhotoUri(undefined);
+        setSelectedAvatar(avatar);
+      }}
+    />
+  ))}
+</View>
       <CustomButton
         title={isLoading ? 'Saving...' : 'Complete Setup'}
         onPress={handleContinue}
@@ -159,6 +186,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: spacing.md,
   },
+  avatarGrid: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  justifyContent: 'center',
+  gap: spacing.sm,
+  marginBottom: spacing.lg,
+},
+orText: {
+  ...typography.caption,
+  color: colors.textLight,
+  textAlign: 'center',
+  marginVertical: spacing.md,
+},
   title: {
     ...typography.h1,
     color: colors.textDark,
