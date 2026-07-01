@@ -9,8 +9,6 @@ import {
   Alert,
 } from 'react-native';
 import { CustomButton } from '../components/CustomButton';
-import { AvatarCard } from '../components/AvatarCard';
-import { avatars } from '../data/dummyData';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
@@ -26,7 +24,12 @@ export const ProfileSetupScreen: React.FC = ({ navigation }: any) => {
   const { selectedAvatar, addChild, setSelectedAvatar, isLoading } = useApp();
 
   const handleContinue = async () => {
-    if (name.trim() && age && gender && selectedAvatar) {
+    if (
+    name.trim() &&
+    age &&
+    gender &&
+    (selectedAvatar || photoUri)
+){
       try {
         await addChild({
           name: name.trim(),
@@ -36,12 +39,7 @@ export const ProfileSetupScreen: React.FC = ({ navigation }: any) => {
           photoUri,
         });
         setSelectedAvatar(null);
-        // Redirect to main app (home) after successful setup
-        try {
-          navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
-        } catch {
-          navigation.navigate('Home');
-        }
+      
       } catch {
         Alert.alert('Error', 'Could not save profile. Please try again.');
       }
@@ -50,11 +48,6 @@ export const ProfileSetupScreen: React.FC = ({ navigation }: any) => {
 
   const ages = ['3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
   const genders = ['Boy', 'Girl', 'Other'];
-
-  // choose avatar from built-in list if user prefers not to upload
-  const handleSelectAvatar = (avatar: any) => {
-    setSelectedAvatar(avatar);
-  };
 
   const handlePickPhoto = async () => {
     try {
@@ -137,15 +130,6 @@ export const ProfileSetupScreen: React.FC = ({ navigation }: any) => {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.label}>Choose Avatar (optional)</Text>
-        <View style={styles.avatarGrid}>
-          {avatars.map(av => (
-            <AvatarCard key={av.id} avatar={av} isSelected={selectedAvatar?.id === av.id} onPress={() => handleSelectAvatar(av)} />
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.section}>
         <Text style={styles.label}>Photo (Optional)</Text>
         <TouchableOpacity style={styles.photoButton} onPress={handlePickPhoto}>
           <Text style={styles.photoButtonText}>
@@ -163,7 +147,7 @@ export const ProfileSetupScreen: React.FC = ({ navigation }: any) => {
         title={isLoading ? 'Saving...' : 'Complete Setup'}
         onPress={handleContinue}
         style={styles.button}
-        disabled={isLoading || !name.trim() || !age || !gender || !selectedAvatar}
+        disabled={isLoading || !name.trim() || !age || !gender ||( !selectedAvatar && !photoUri)}
       />
     </ScreenLayout>
   );
@@ -209,12 +193,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
-  },
-  avatarGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    marginVertical: spacing.md,
   },
   chip: {
     backgroundColor: colors.white,

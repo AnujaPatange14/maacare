@@ -140,17 +140,6 @@ export const api = {
 
   getStreaks: (token: string, childId: string) =>
     request<{ streaks: StreakStats }>(`/api/progress/${childId}/streaks`, {}, token),
-  forgotPassword: (email: string) =>
-    request<{ ok: boolean; token?: string }>(`/api/auth/forgot`, {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    }),
-
-  resetPassword: (token: string, password: string) =>
-    request<{ ok: boolean }>(`/api/auth/reset`, {
-      method: 'POST',
-      body: JSON.stringify({ token, password }),
-    }),
 };
 
 export { API_URL };

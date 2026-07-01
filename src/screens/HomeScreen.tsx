@@ -34,13 +34,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   const todayIndex = new Date().getDate() % affirmations.length;
   const dailyAffirmation = affirmations[todayIndex];
+  const hour = new Date().getHours();
+  const greeting =
+    hour < 12
+      ? '🌞 Good Morning'
+      : hour < 17
+      ? '☀️ Good Afternoon'
+      : '🌙 Good Evening';
 
   return (
     <ScreenLayout>
       <ChildSwitcher navigation={navigation} />
 
       <View style={styles.headerSection}>
-        <Text style={styles.greeting}>Hello, {childName} 👋</Text>
+        <Text style={styles.greeting}>
+  {greeting}, {childName}!
+</Text>
+<Text style={styles.subtitle}>
+  Let's complete today's routine! 🌟
+</Text>
         <View style={styles.avatarContainer}>
           {photoUri ? (
             <Image source={{ uri: photoUri }} style={styles.avatarImage} />
@@ -51,18 +63,56 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Today's Progress</Text>
-        <Text style={styles.overallPercent}>{Math.round(overallProgress)}%</Text>
-        <ProgressBar progress={overallProgress} showPercentage={false} />
-        <View style={styles.progressSection}>
-          <ProgressBar progress={morningProgress} label="Morning" showPercentage />
-          <ProgressBar progress={nightProgress} label="Night" showPercentage />
-        </View>
-        {streakStats && streakStats.currentStreak > 0 && (
-          <Text style={styles.streakText}>
-            🔥 {streakStats.currentStreak}-day streak — keep it going!
-          </Text>
-        )}
+        <Text style={styles.cardTitle}>📈 Today's Progress</Text>
+
+<Text style={styles.overallPercent}>
+  {Math.round(overallProgress)}%
+</Text>
+
+<Text style={styles.progressSummary}>
+  {completedMorning + completedNight} of {totalMorning + totalNight} tasks completed
+</Text>
+
+<ProgressBar
+  progress={overallProgress}
+  showPercentage={false}
+/>
+
+<View style={styles.statsContainer}>
+
+  <View style={styles.statCard}>
+    <Text style={styles.statEmoji}>🌅</Text>
+    <Text style={styles.statTitle}>Morning</Text>
+    <Text style={styles.statValue}>
+      {completedMorning}/{totalMorning}
+    </Text>
+  </View>
+
+  <View style={styles.statCard}>
+    <Text style={styles.statEmoji}>🌙</Text>
+    <Text style={styles.statTitle}>Night</Text>
+    <Text style={styles.statValue}>
+      {completedNight}/{totalNight}
+    </Text>
+  </View>
+
+</View>
+
+{streakStats && streakStats.currentStreak > 0 && (
+  <View style={styles.streakCard}>
+    <Text style={styles.streakEmoji}>🔥</Text>
+
+    <View>
+      <Text style={styles.streakTitle}>
+        {streakStats.currentStreak} Day Streak
+      </Text>
+
+      <Text style={styles.streakSubtitle}>
+        Keep it going!
+      </Text>
+    </View>
+  </View>
+)}
       </View>
 
       <View style={styles.card}>
@@ -109,6 +159,60 @@ const styles = StyleSheet.create({
     color: colors.textDark,
     marginBottom: spacing.md,
   },
+  statsContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginTop: spacing.lg,
+},
+
+statCard: {
+  flex: 1,
+  backgroundColor: colors.primaryLight,
+  borderRadius: 16,
+  padding: spacing.md,
+  alignItems: 'center',
+  marginHorizontal: spacing.xs,
+},
+
+statEmoji: {
+  fontSize: 28,
+},
+
+statTitle: {
+  ...typography.caption,
+  color: colors.textLight,
+  marginTop: spacing.xs,
+},
+
+statValue: {
+  ...typography.h3,
+  color: colors.accent,
+  marginTop: spacing.xs,
+},
+
+streakCard: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#FFF4E5',
+  borderRadius: 18,
+  padding: spacing.md,
+  marginTop: spacing.lg,
+},
+
+streakEmoji: {
+  fontSize: 36,
+  marginRight: spacing.md,
+},
+
+streakTitle: {
+  ...typography.bodyBold,
+  color: '#D97706',
+},
+
+streakSubtitle: {
+  ...typography.caption,
+  color: colors.textLight,
+},
   avatarContainer: {
     width: 96,
     height: 96,
@@ -142,6 +246,19 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 4,
   },
+  subtitle: {
+  ...typography.body,
+  color: colors.textLight,
+  textAlign: 'center',
+  marginBottom: spacing.md,
+},
+  progressSummary: {
+    ...typography.body,
+    color: colors.textLight,
+    textAlign: 'center',
+    marginTop: spacing.sm,
+    marginBottom: spacing.md,
+},
   affirmationCard: {
     backgroundColor: colors.primaryLight,
     borderWidth: 1,

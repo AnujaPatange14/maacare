@@ -5,8 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, Platform } from 'react-native';
 import { WelcomeScreen } from '../screens/WelcomeScreen';
 import { LoginScreen } from '../screens/LoginScreen';
-import { ForgotPasswordScreen } from '../screens/ForgotPasswordScreen';
-import { ResetPasswordScreen } from '../screens/ResetPasswordScreen';
+import { CreateAvatarScreen } from '../screens/CreateAvatarScreen';
 import { ProfileSetupScreen } from '../screens/ProfileSetupScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { RoutineScreen } from '../screens/RoutineScreen';
@@ -96,13 +95,12 @@ const AuthStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="Welcome" component={WelcomeScreen} />
     <Stack.Screen name="Login" component={LoginScreen} />
-    <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-    <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
   </Stack.Navigator>
 );
 
 const OnboardingStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Screen name="CreateAvatar" component={CreateAvatarScreen} />
     <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
   </Stack.Navigator>
 );
@@ -110,6 +108,7 @@ const OnboardingStack = () => (
 const AppStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="MainTabs" component={MainTabs} />
+    <Stack.Screen name="CreateAvatar" component={CreateAvatarScreen} />
     <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
     <Stack.Screen
       name="RoutineDetail"

@@ -56,15 +56,6 @@ db.exec(`
     UNIQUE (child_id, date),
     FOREIGN KEY (child_id) REFERENCES children(id) ON DELETE CASCADE
   );
-
-  CREATE TABLE IF NOT EXISTS password_resets (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    token TEXT NOT NULL UNIQUE,
-    expires_at TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  );
 `);
 
 // Migration for existing databases

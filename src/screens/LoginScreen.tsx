@@ -167,7 +167,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, route }: a
             </View>
           )}
           {mode === 'login' && (
-            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+            <TouchableOpacity onPress={() => Alert.alert('Forgot password', 'Password reset is not available in this demo. Please contact support.') }>
               <Text style={{ color: colors.accent, marginTop: spacing.sm, textAlign: 'right' }}>Forgot password?</Text>
             </TouchableOpacity>
           )}
