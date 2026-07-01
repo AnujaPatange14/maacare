@@ -310,37 +310,37 @@ await setCurrentChildId(child.id);
     }
   };
 
- const loginUser = async (email: string, password: string) => {
-  setIsLoading(true);
-  setError(null);
+  const loginUser = async (email: string, password: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { token, user } = await api.login(email, password);
+      await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
+      setAuthToken(token);
+      setCurrentUser(user);
+      setLoggedIn(true);
+      const { children: loaded } = await api.getChildren(token);
+      setChildrenList(loaded as ChildProfile[]);
 
-  try {
-    const { token, user } = await api.login(email, password);
+      const storedChildId = await AsyncStorage.getItem(CURRENT_CHILD_KEY);
+      const validChild = loaded.find(c => c.id === storedChildId);
+      if (validChild) {
+        setCurrentChildIdState(validChild.id);
+      } else if (loaded.length > 0) {
+        setCurrentChildIdState(loaded[0].id);
+        await AsyncStorage.setItem(CURRENT_CHILD_KEY, loaded[0].id);
+      } else {
+        setCurrentChildIdState(null);
+      }
 
-    await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
-
-    setAuthToken(token);
-    setCurrentUser(user);
-    setLoggedIn(true);
-
-    // Load children and restore selected child
-    await loadChildren(token);
-
-    return {
-      success: true,
-      hasChildren: true, // we'll improve this later if needed
-    };
-  } catch (e) {
-    setError(e instanceof ApiError ? e.message : 'Login failed');
-
-    return {
-      success: false,
-      hasChildren: false,
-    };
-  } finally {
-    setIsLoading(false);
-  }
-};
+      return { success: true, hasChildren: loaded.length > 0 };
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Login failed');
+      return { success: false, hasChildren: false };
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const logout = async () => {
     await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, CURRENT_CHILD_KEY]);
