@@ -86,6 +86,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     } else {
       setCurrentChildIdState(null);
     }
+    return children;
   }, []);
 
   const refreshWeeklyProgress = useCallback(async () => {
@@ -180,16 +181,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!authToken) return;
     setIsLoading(true);
     setError(null);
-    try {
-      const { child } = await api.createChild(authToken, profileData);
-      setChildrenList(prev => [...prev, child as ChildProfile]);
-      await setCurrentChildId(child.id);
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Failed to add child');
-      throw e;
-    } finally {
-      setIsLoading(false);
-    }
+   try {
+    console.log("Creating child...");
+  await api.createChild(authToken, profileData);
+    console.log("Child created");
+  // Reload children from the backend
+  await loadChildren(authToken);
+  const loaded = await loadChildren(authToken);
+    console.log("Children after reload:", loaded);
+} catch (e) {
+  setError(e instanceof ApiError ? e.message : 'Failed to add child');
+  throw e;
+} finally {
+  setIsLoading(false);
+}
   };
 
   const updateChild = async (id: string, updates: Partial<ChildProfile>) => {
@@ -347,15 +352,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const logout = async () => {
-    await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, CURRENT_CHILD_KEY]);
-    setAuthToken(null);
-    setCurrentUser(null);
-    setLoggedIn(false);
-    setChildrenList([]);
-    setCurrentChildIdState(null);
-    setWeeklyProgress([]);
-    setStreakStats(null);
-  };
+  console.log("Logout clicked");
+
+  await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, CURRENT_CHILD_KEY]);
+
+  setAuthToken(null);
+  setCurrentUser(null);
+  setLoggedIn(false);
+  setChildrenList([]);
+  setCurrentChildIdState(null);
+  setWeeklyProgress([]);
+  setStreakStats(null);
+
+  console.log("Logout finished");
+};
 
   return (
     <AppContext.Provider

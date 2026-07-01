@@ -10,16 +10,9 @@ import { useApp } from '../context/AppContext';
 export const SettingsScreen: React.FC = () => {
   const { currentUser, logout, isOnline } = useApp();
 
-  const handleLogout = () => {
-    Alert.alert('Log Out', 'Are you sure you want to log out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Log Out',
-        style: 'destructive',
-        onPress: () => logout(),
-      },
-    ]);
-  };
+ const handleLogout = async () => {
+  await logout();
+};
 
   return (
     <ScreenLayout>

@@ -33,17 +33,20 @@ export const ProfileSetupScreen: React.FC = ({ navigation }: any) => {
     (selectedAvatar || photoUri)
 ){
       try {
-        await addChild({
-          name: name.trim(),
-          age: parseInt(age, 10),
-          gender,
-          avatar: selectedAvatar,
-          photoUri,
-        });
-        setSelectedAvatar(null);
-        navigation.reset({
-  index: 0,
-  routes: [{ name: 'MainTabs' }],
+       await addChild({
+  name: name.trim(),
+  age: parseInt(age, 10),
+  gender,
+  avatar: selectedAvatar,
+  photoUri,
+});
+
+// Wait one render cycle before navigating
+setTimeout(() => {
+  navigation.reset({
+    index: 0,
+    routes: [{ name: 'MainTabs' }],
+  });
 });
       
       } catch {

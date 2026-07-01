@@ -130,7 +130,12 @@ export const AppNavigator = () => {
 
   const showApp = isLoggedIn && children.length > 0 && !!currentChildId;
   const showOnboarding = isLoggedIn && !showApp;
-
+  console.log(
+  "NAV:",
+  isLoggedIn,
+  children.length,
+  currentChildId
+);
   return (
     <NavigationContainer>
       {showApp ? <AppStack /> : showOnboarding ? <OnboardingStack /> : <AuthStack />}
