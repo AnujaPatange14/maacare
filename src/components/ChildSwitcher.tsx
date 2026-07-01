@@ -11,7 +11,16 @@ interface ChildSwitcherProps {
 }
 
 export const ChildSwitcher: React.FC<ChildSwitcherProps> = ({ navigation }) => {
-  const { children, currentChildId, setCurrentChildId, childProfile, deleteChild } = useApp();
+  const {
+  children,
+  currentChildId,
+  setCurrentChildId,
+  childProfile,
+  deleteChild,
+  isParentVerified,
+  setPendingAction,
+  executePendingAction,
+} = useApp();
   const [showModal, setShowModal] = React.useState(false);
 
   const handleSwitchChild = (childId: string) => {
@@ -19,46 +28,42 @@ export const ChildSwitcher: React.FC<ChildSwitcherProps> = ({ navigation }) => {
     setShowModal(false);
   };
 
-  const handleDeleteChild = async (childId: string) => {
-    const child = children.find(c => c.id === childId);
-    Alert.alert(
-      'Delete Child',
-      child ? `Delete ${child.name} and all their tasks?` : 'Delete this child and all their tasks?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteChild(childId);
-              // close modal after deletion
-              if (children.length <= 1) {
-                setShowModal(false);
-              }
-            } catch {
-              // error handled in context
-            }
-          },
-        },
-      ]
-    );
-  };
+const handleDeleteChild = async (childId: string) => {
+  if (isParentVerified) {
+    await deleteChild(childId);
+    return;
+  }
 
-  const handleAddNewChild = () => {
-    setShowModal(false);
-    Alert.alert('Parent access', 'Please log in as a parent to add a new child.', [
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
-      {
-        text: 'Log in',
-        onPress: () => navigation.navigate('Login', { redirectTo: 'ProfileSetup', parentAccess: true }),
-      },
-    ]);
-  };
+  setPendingAction({
+    type: "deleteChild",
+    payload: {
+      childId,
+    },
+  });
 
+  setShowModal(false);
+
+  navigation.navigate("Settings", {
+  refresh: Date.now(),
+});
+};
+const handleAddNewChild = () => {
+  console.log("STEP 1");
+
+  setShowModal(false);
+
+  console.log("STEP 2");
+
+  setPendingAction({
+    type: "addChild",
+  });
+
+  console.log("STEP 3");
+
+  navigation.navigate("Settings");
+
+  console.log("STEP 4");
+};
   if (children.length === 0) return null;
 
   const currentChild = childProfile;
@@ -87,80 +92,97 @@ export const ChildSwitcher: React.FC<ChildSwitcherProps> = ({ navigation }) => {
       </TouchableOpacity>
 
       <Modal
-        visible={showModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Switch Child</Text>
-              <TouchableOpacity onPress={() => setShowModal(false)}>
-                <Text style={styles.closeButton}>✕</Text>
-              </TouchableOpacity>
-            </View>
+  visible={showModal}
+  transparent
+  animationType="slide"
+  onRequestClose={() => setShowModal(false)}
+>
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContent}>
 
-            <ScrollView style={styles.childrenList}>
-              {children.map(child => (
-                <View
-                  key={child.id}
+      {/* Header */}
+      <View style={styles.modalHeader}>
+        <Text style={styles.modalTitle}>Switch Child</Text>
+
+        <TouchableOpacity onPress={() => setShowModal(false)}>
+          <Text style={styles.closeButton}>✕</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Child List */}
+      <ScrollView
+        style={styles.childrenList}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
+        {children.map(child => (
+          <View
+            key={child.id}
+            style={[
+              styles.childItem,
+              currentChildId === child.id && styles.childItemActive,
+            ]}
+          >
+            <TouchableOpacity
+              style={styles.childMain}
+              onPress={() => handleSwitchChild(child.id)}
+            >
+              {child.photoUri ? (
+                <Image
+                  source={{ uri: child.photoUri }}
+                  style={styles.childAvatarImage}
+                />
+              ) : (
+                <Text style={styles.childAvatar}>
+                  {child.avatar?.emoji || '⭐'}
+                </Text>
+              )}
+
+              <View style={styles.childInfo}>
+                <Text
                   style={[
-                    styles.childItem,
-                    currentChildId === child.id && styles.childItemActive,
+                    styles.childItemName,
+                    currentChildId === child.id &&
+                      styles.childItemNameActive,
                   ]}
                 >
-                  <TouchableOpacity
-                    style={styles.childMain}
-                    onPress={() => handleSwitchChild(child.id)}
-                    activeOpacity={0.7}
-                  >
-                    {child.photoUri ? (
-                      <Image source={{ uri: child.photoUri }} style={styles.childAvatarImage} />
-                    ) : (
-                      <Text style={styles.childAvatar}>{child.avatar?.emoji || '⭐'}</Text>
-                    )}
-                    <View style={styles.childInfo}>
-                      <Text
-                        style={[
-                          styles.childItemName,
-                          currentChildId === child.id && styles.childItemNameActive,
-                        ]}
-                      >
-                        {child.name}
-                      </Text>
-                      <Text style={styles.childItemAge}>
-                        {child.age} years old • {child.gender}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                  <View style={styles.childActions}>
-                    {currentChildId === child.id && (
-                      <Text style={styles.checkmark}>✓</Text>
-                    )}
-                   
-                    <TouchableOpacity
-                      onPress={() => handleDeleteChild(child.id)}
-                      style={styles.deleteChildButton}
-                    >
-                      <Text style={styles.deleteChildText}>🗑</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ))}
-            </ScrollView>
+                  {child.name}
+                </Text>
 
-            <View style={styles.modalFooter}>
-              <CustomButton
-                title="+ Add New Child"
-                onPress={handleAddNewChild}
-                variant="secondary"
-                style={styles.addButton}
-              />
+                <Text style={styles.childItemAge}>
+                  {child.age} years old • {child.gender}
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            <View style={styles.childActions}>
+              {currentChildId === child.id && (
+                <Text style={styles.checkmark}>✓</Text>
+              )}
+
+              <TouchableOpacity
+                onPress={() => handleDeleteChild(child.id)}
+                style={styles.deleteChildButton}
+              >
+                <Text style={styles.deleteChildText}>🗑</Text>
+              </TouchableOpacity>
             </View>
           </View>
-        </View>
-      </Modal>
+        ))}
+      </ScrollView>
+
+      {/* Footer */}
+      <View style={styles.modalFooter}>
+        <CustomButton
+          title="+ Add New Child"
+          onPress={handleAddNewChild}
+          variant="secondary"
+          style={styles.addButton}
+        />
+      </View>
+
+    </View>
+  </View>
+</Modal>
     </>
   );
 };
@@ -213,12 +235,30 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: colors.white,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    maxHeight: '80%',
-    paddingTop: spacing.lg,
-  },
+  backgroundColor: colors.white,
+  borderTopLeftRadius: 30,
+  borderTopRightRadius: 30,
+  maxHeight: '80%',
+  paddingTop: spacing.lg,
+  paddingBottom: spacing.lg,
+},
+
+childrenList: {
+  flexGrow: 0,
+  maxHeight: 350,
+  paddingHorizontal: spacing.lg,
+  paddingTop: spacing.md,
+},
+modalFooter: {
+  padding: spacing.lg,
+  borderTopWidth: 1,
+  borderTopColor: colors.border,
+  backgroundColor: colors.white,
+},
+
+addButton: {
+  width: '100%',
+},
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -236,11 +276,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: colors.textLight,
     fontWeight: '300',
-  },
-  childrenList: {
-    maxHeight: 400,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
   },
   childItem: {
     flexDirection: 'row',
@@ -299,13 +334,5 @@ const styles = StyleSheet.create({
   deleteChildText: {
     ...typography.small,
     color: '#FF6B6B',
-  },
-  modalFooter: {
-    padding: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  addButton: {
-    width: '100%',
   },
 });

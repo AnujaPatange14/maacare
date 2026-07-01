@@ -13,6 +13,10 @@ export interface ChildProfile {
   morningTasks: Task[];
   nightTasks: Task[];
 }
+type PendingAction =
+  | { type: 'logout' }
+  | { type: 'addChild' }
+  | { type: 'deleteChild'; payload: { childId: string } };
 
 interface AppContextType {
   children: ChildProfile[];
@@ -49,10 +53,7 @@ interface AppContextType {
 
 isParentVerified: boolean;
 
-pendingAction: {
-  type: string;
-  payload?: any;
-} | null;
+pendingAction: PendingAction | null;
 
 createParentPin: (pin: string) => Promise<void>;
 
@@ -61,10 +62,7 @@ verifyParentPin: (pin: string) => boolean;
 clearParentVerification: () => void;
 
 setPendingAction: React.Dispatch<
-  React.SetStateAction<{
-    type: string;
-    payload?: any;
-  } | null>
+  React.SetStateAction<PendingAction | null>
 >;
 }
 
@@ -88,10 +86,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [isOnline, setIsOnline] = useState(true);
   const [parentPin, setParentPinState] = useState<string | null>(null);
   const [isParentVerified, setIsParentVerified] = useState(false);
-  const [pendingAction, setPendingAction] = useState<null | {
-    type: string;
-    payload?: any;
-    }>(null);
+  const [pendingAction, setPendingAction] =
+  useState<PendingAction | null>(null);
 
   const clearError = () => setError(null);
   const createParentPin = async (pin: string) => {
@@ -99,13 +95,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     await AsyncStorage.setItem('PARENT_PIN', pin);
   };
-  const verifyParentPin = (pin: string) => {
-  if (pin === parentPin) {
+const verifyParentPin = (pin: string) => {
+  const ok = pin === parentPin;
+
+  console.log("Verify PIN:", {
+    entered: pin,
+    saved: parentPin,
+    result: ok,
+  });
+
+  if (ok) {
     setIsParentVerified(true);
-    return true;
   }
 
-  return false;
+  return ok;
 };
   const clearParentVerification = () => {
     setIsParentVerified(false);
@@ -170,6 +173,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       try {
         const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+        const storedPin = await AsyncStorage.getItem('PARENT_PIN');
+        if (storedPin) {
+          setParentPinState(storedPin);
+        }
         if (token) {
           const { user } = await api.me(token);
           setAuthToken(token);
@@ -362,33 +369,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setIsLoading(false);
     }
   };
-  const executePendingAction = async (
-    navigation?: any
-) => {
+  const executePendingAction = async (navigation?: any) => {
+  if (!pendingAction) return;
 
-    if (!pendingAction) return;
+  const action = pendingAction;
 
-    switch (pendingAction.type) {
 
-        case "logout":
-            await logout();
-            break;
+  switch (action.type) {
+    case "logout":
+      await logout();
+      break;
 
-        case "addChild":
-            navigation?.navigate("ProfileSetup");
-            break;
+    case "addChild":
+      navigation?.navigate("ProfileSetup");
+      break;
 
-        case "deleteChild":
-            await deleteChild(
-                pendingAction.payload.childId
-            );
-            break;
+    case "deleteChild":
+      await deleteChild(action.payload.childId);
+      break;
 
-        default:
-            break;
-    }
+    default:
+      break;
+  }
 
-    clearParentVerification();
+
+  clearParentVerification();
 };
   const loginUser = async (email: string, password: string) => {
     setIsLoading(true);

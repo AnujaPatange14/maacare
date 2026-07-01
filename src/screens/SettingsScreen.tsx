@@ -1,5 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Alert,
+  TextInput,
+} from 'react-native';
 import { CustomButton } from '../components/CustomButton';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { colors } from '../theme/colors';
@@ -7,8 +13,23 @@ import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 import { useApp } from '../context/AppContext';
 
-export const SettingsScreen: React.FC = () => {
-  const { currentUser, logout, isOnline } = useApp();
+export const SettingsScreen: React.FC<any> = ({ navigation }) => {
+  const {
+  currentUser,
+  logout,
+  isOnline,
+  parentPin,
+  createParentPin,
+  verifyParentPin,
+  executePendingAction,
+  setPendingAction,
+  pendingAction,
+} = useApp();
+React.useEffect(() => {
+  console.log("Settings pendingAction =", pendingAction);
+}, [pendingAction]);
+const [pin, setPin] = React.useState('');
+const [confirmPin, setConfirmPin] = React.useState('');
 
  const handleLogout = async () => {
   await logout();
@@ -18,7 +39,90 @@ export const SettingsScreen: React.FC = () => {
     <ScreenLayout>
       <Text style={styles.emoji}>⚙️</Text>
       <Text style={styles.title}>Settings</Text>
+      <View style={styles.card}>
+  <Text style={styles.cardTitle}>🔒 Parent Access</Text>
 
+  {!parentPin ? (
+    <>
+      <Text style={styles.aboutText}>
+        Create a 4-digit PIN to protect parent features.
+      </Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="Enter PIN"
+        keyboardType="numeric"
+        secureTextEntry
+        maxLength={4}
+        value={pin}
+        onChangeText={setPin}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Confirm PIN"
+        keyboardType="numeric"
+        secureTextEntry
+        maxLength={4}
+        value={confirmPin}
+        onChangeText={setConfirmPin}
+      />
+
+      <CustomButton
+        title="Create PIN"
+        onPress={async () => {
+          if (pin.length !== 4) {
+            Alert.alert("PIN must be 4 digits");
+            return;
+          }
+
+          if (pin !== confirmPin) {
+            Alert.alert("PINs do not match");
+            return;
+          }
+
+          await createParentPin(pin);
+
+          Alert.alert("PIN created");
+        }}
+      />
+    </>
+  ) : (
+    <>
+      <Text style={styles.aboutText}>
+        Enter your Parent PIN.
+      </Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="Parent PIN"
+        keyboardType="numeric"
+        secureTextEntry
+        maxLength={4}
+        value={pin}
+        onChangeText={setPin}
+      />
+
+      <CustomButton
+        title="Unlock"
+        onPress={async () => {
+          const ok = verifyParentPin(pin);
+
+          if (!ok) {
+            Alert.alert("Incorrect PIN");
+            return;
+          }
+
+          setPin("");
+
+          await executePendingAction(navigation);
+
+          Alert.alert("Parent verified");
+        }}
+      />
+    </>
+  )}
+</View>
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Account</Text>
         <View style={styles.row}>
@@ -128,4 +232,12 @@ const styles = StyleSheet.create({
   },
   version: { ...typography.caption, color: colors.textLight },
   logoutButton: { marginTop: spacing.sm },
+  input: {
+  borderWidth: 1,
+  borderColor: colors.border,
+  borderRadius: 12,
+  padding: 14,
+  marginBottom: spacing.md,
+  color: colors.textDark,
+},
 });

@@ -122,14 +122,20 @@ const AppStack = () => (
 );
 
 export const AppNavigator = () => {
-  const { isLoggedIn, children, currentChildId, isHydrated } = useApp();
+  const {
+  isLoggedIn,
+  children,
+  currentChildId,
+  isHydrated,
+  pendingAction,
+} = useApp();
 
   if (!isHydrated) {
     return <LoadingScreen />;
   }
 
-  const showApp = isLoggedIn && children.length > 0 && !!currentChildId;
-  const showOnboarding = isLoggedIn && !showApp;
+  const showApp = isLoggedIn;
+
   console.log(
   "NAV:",
   isLoggedIn,
@@ -138,7 +144,11 @@ export const AppNavigator = () => {
 );
   return (
     <NavigationContainer>
-      {showApp ? <AppStack /> : showOnboarding ? <OnboardingStack /> : <AuthStack />}
-    </NavigationContainer>
+  {!isLoggedIn ? (
+  <AuthStack />
+) : (
+  <AppStack />
+)}
+</NavigationContainer>
   );
 };
