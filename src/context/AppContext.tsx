@@ -44,6 +44,28 @@ interface AppContextType {
   streakStats: StreakStats | null;
   refreshStreakStats: () => Promise<void>;
   isOnline: boolean;
+  parentPin: string | null;
+  executePendingAction: (navigation?: any) => Promise<void>;
+
+isParentVerified: boolean;
+
+pendingAction: {
+  type: string;
+  payload?: any;
+} | null;
+
+createParentPin: (pin: string) => Promise<void>;
+
+verifyParentPin: (pin: string) => boolean;
+
+clearParentVerification: () => void;
+
+setPendingAction: React.Dispatch<
+  React.SetStateAction<{
+    type: string;
+    payload?: any;
+  } | null>
+>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -64,9 +86,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [weeklyProgress, setWeeklyProgress] = useState<WeeklyDay[]>([]);
   const [streakStats, setStreakStats] = useState<StreakStats | null>(null);
   const [isOnline, setIsOnline] = useState(true);
+  const [parentPin, setParentPinState] = useState<string | null>(null);
+  const [isParentVerified, setIsParentVerified] = useState(false);
+  const [pendingAction, setPendingAction] = useState<null | {
+    type: string;
+    payload?: any;
+    }>(null);
 
   const clearError = () => setError(null);
+  const createParentPin = async (pin: string) => {
+    setParentPinState(pin);
 
+    await AsyncStorage.setItem('PARENT_PIN', pin);
+  };
+  const verifyParentPin = (pin: string) => {
+  if (pin === parentPin) {
+    setIsParentVerified(true);
+    return true;
+  }
+
+  return false;
+};
+  const clearParentVerification = () => {
+    setIsParentVerified(false);
+    setPendingAction(null);
+  };
   const setCurrentChildId = useCallback(async (id: string) => {
     setCurrentChildIdState(id);
     await AsyncStorage.setItem(CURRENT_CHILD_KEY, id);
@@ -318,7 +362,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setIsLoading(false);
     }
   };
+  const executePendingAction = async (
+    navigation?: any
+) => {
 
+    if (!pendingAction) return;
+
+    switch (pendingAction.type) {
+
+        case "logout":
+            await logout();
+            break;
+
+        case "addChild":
+            navigation?.navigate("ProfileSetup");
+            break;
+
+        case "deleteChild":
+            await deleteChild(
+                pendingAction.payload.childId
+            );
+            break;
+
+        default:
+            break;
+    }
+
+    clearParentVerification();
+};
   const loginUser = async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
@@ -366,7 +437,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   console.log("Logout finished");
 };
-
   return (
     <AppContext.Provider
       value={{
@@ -399,6 +469,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         streakStats,
         refreshStreakStats,
         isOnline,
+        parentPin,
+        createParentPin,
+        verifyParentPin,
+        isParentVerified,
+        pendingAction,
+        setPendingAction,
+        clearParentVerification,
+        executePendingAction,
       }}
     >
       {children}
