@@ -82,7 +82,12 @@ git push -u origin main
    - `JWT_SECRET` — long random string (Render can auto-generate)
    - `CORS_ORIGIN` — your Vercel URL (set after Step 3), e.g. `https://maacare.vercel.app`
    - `DATA_DIR` — `/opt/render/project/src/server/data`
+   - (for password reset emails) `SENDGRID_API_KEY` — your SendGrid API key
+   - `SENDER_EMAIL` — the verified sender address (e.g. no-reply@yourdomain.com)
+   - `FRONTEND_URL` — your Vercel URL, e.g. `https://maacare.vercel.app` (used to build reset links)
 4. Deploy and copy your API URL, e.g. `https://maacare-api.onrender.com`.
+
+Note: For password reset to send real emails, set `SENDGRID_API_KEY` and `SENDER_EMAIL` on Render. The server will send a secure, one-hour reset link to `FRONTEND_URL/reset-password?token=...`. If not set, the API will return the token in the response for dev/test only.
 
 > **Note:** Render free tier sleeps after inactivity. The first request may take ~30 seconds to wake up.
 

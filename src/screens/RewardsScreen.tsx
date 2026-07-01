@@ -1,11 +1,12 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Modal, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { StatCard } from '../components/StatCard';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 import { useApp } from '../context/AppContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Reward {
   id: string;
@@ -17,6 +18,55 @@ interface Reward {
 
 export const RewardsScreen: React.FC = () => {
   const { morningTasks, nightTasks, streakStats } = useApp();
+
+  const { currentUser } = useApp();
+  const [customRewards, setCustomRewards] = useState<Reward[]>([]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newEmoji, setNewEmoji] = useState('⭐');
+  const [newDescription, setNewDescription] = useState('');
+  const [newStars, setNewStars] = useState('1');
+
+  const rewardsKey = `maacare_rewards_${currentUser?.id || 'anon'}`;
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const raw = await AsyncStorage.getItem(rewardsKey);
+        if (raw) setCustomRewards(JSON.parse(raw));
+      } catch {}
+    };
+    load();
+  }, [rewardsKey]);
+
+  const saveCustom = async (list: Reward[]) => {
+    try {
+      await AsyncStorage.setItem(rewardsKey, JSON.stringify(list));
+    } catch {}
+  };
+
+  const handleAddReward = () => {
+    const starsNum = parseInt(newStars, 10) || 0;
+    if (!newTitle.trim() || starsNum <= 0) {
+      Alert.alert('Invalid', 'Please provide a title and positive stars number.');
+      return;
+    }
+    const r: Reward = {
+      id: Date.now().toString(),
+      title: newTitle.trim(),
+      emoji: newEmoji || '⭐',
+      description: newDescription,
+      earned: false,
+    };
+    const next = [r, ...customRewards];
+    setCustomRewards(next);
+    saveCustom(next);
+    setShowAddModal(false);
+    setNewTitle('');
+    setNewEmoji('⭐');
+    setNewDescription('');
+    setNewStars('1');
+  };
 
   const completedMorning = morningTasks.filter(t => t.completed).length;
   const completedNight = nightTasks.filter(t => t.completed).length;
@@ -73,6 +123,8 @@ export const RewardsScreen: React.FC = () => {
 
   const earnedCount = rewards.filter(r => r.earned).length;
 
+  const combinedRewards = [...customRewards, ...rewards];
+
   return (
     <ScreenLayout>
       <View style={styles.header}>
@@ -92,7 +144,7 @@ export const RewardsScreen: React.FC = () => {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Your Badges</Text>
         <View style={styles.badgesContainer}>
-          {rewards.map(reward => (
+          {combinedRewards.map(reward => (
             <View
               key={reward.id}
               style={[styles.badge, reward.earned && styles.badgeEarned]}
@@ -113,6 +165,33 @@ export const RewardsScreen: React.FC = () => {
           ))}
         </View>
       </View>
+      {currentUser && (
+        <View style={{ marginTop: spacing.sm }}>
+          <TouchableOpacity onPress={() => setShowAddModal(true)}>
+            <Text style={{ color: colors.accent, textAlign: 'center' }}>+ Add Reward</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <Modal visible={showAddModal} transparent animationType="slide">
+        <View style={{ flex: 1, justifyContent: 'center', padding: spacing.lg }}>
+          <View style={{ backgroundColor: colors.white, borderRadius: 12, padding: spacing.lg }}>
+            <Text style={{ ...typography.h3, color: colors.textDark }}>Add Reward</Text>
+            <TextInput placeholder="Title" value={newTitle} onChangeText={setNewTitle} style={styles.modalInput} />
+            <TextInput placeholder="Emoji" value={newEmoji} onChangeText={setNewEmoji} style={styles.modalInput} />
+            <TextInput placeholder="Stars required (number)" value={newStars} onChangeText={setNewStars} style={styles.modalInput} keyboardType="numeric" />
+            <TextInput placeholder="Description" value={newDescription} onChangeText={setNewDescription} style={styles.modalInput} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.sm }}>
+              <TouchableOpacity onPress={() => setShowAddModal(false)} style={{ padding: spacing.sm }}>
+                <Text style={{ color: colors.textLight }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleAddReward} style={{ padding: spacing.sm }}>
+                <Text style={{ color: colors.accent }}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScreenLayout>
   );
 };

@@ -9,6 +9,8 @@ import {
   Alert,
 } from 'react-native';
 import { CustomButton } from '../components/CustomButton';
+import { AvatarCard } from '../components/AvatarCard';
+import { avatars } from '../data/dummyData';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
@@ -16,7 +18,7 @@ import { typography } from '../theme/typography';
 import { useApp } from '../context/AppContext';
 import * as ImagePicker from 'expo-image-picker';
 
-export const ProfileSetupScreen: React.FC = () => {
+export const ProfileSetupScreen: React.FC = ({ navigation }: any) => {
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
@@ -34,6 +36,12 @@ export const ProfileSetupScreen: React.FC = () => {
           photoUri,
         });
         setSelectedAvatar(null);
+        // Redirect to main app (home) after successful setup
+        try {
+          navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
+        } catch {
+          navigation.navigate('Home');
+        }
       } catch {
         Alert.alert('Error', 'Could not save profile. Please try again.');
       }
@@ -42,6 +50,11 @@ export const ProfileSetupScreen: React.FC = () => {
 
   const ages = ['3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
   const genders = ['Boy', 'Girl', 'Other'];
+
+  // choose avatar from built-in list if user prefers not to upload
+  const handleSelectAvatar = (avatar: any) => {
+    setSelectedAvatar(avatar);
+  };
 
   const handlePickPhoto = async () => {
     try {
@@ -124,6 +137,15 @@ export const ProfileSetupScreen: React.FC = () => {
       </View>
 
       <View style={styles.section}>
+        <Text style={styles.label}>Choose Avatar (optional)</Text>
+        <View style={styles.avatarGrid}>
+          {avatars.map(av => (
+            <AvatarCard key={av.id} avatar={av} isSelected={selectedAvatar?.id === av.id} onPress={() => handleSelectAvatar(av)} />
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.section}>
         <Text style={styles.label}>Photo (Optional)</Text>
         <TouchableOpacity style={styles.photoButton} onPress={handlePickPhoto}>
           <Text style={styles.photoButtonText}>
@@ -187,6 +209,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
+  },
+  avatarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginVertical: spacing.md,
   },
   chip: {
     backgroundColor: colors.white,

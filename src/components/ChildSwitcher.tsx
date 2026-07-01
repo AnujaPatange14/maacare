@@ -19,7 +19,7 @@ export const ChildSwitcher: React.FC<ChildSwitcherProps> = ({ navigation }) => {
     setShowModal(false);
   };
 
-  const handleDeleteChild = (childId: string) => {
+  const handleDeleteChild = async (childId: string) => {
     const child = children.find(c => c.id === childId);
     Alert.alert(
       'Delete Child',
@@ -29,10 +29,15 @@ export const ChildSwitcher: React.FC<ChildSwitcherProps> = ({ navigation }) => {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            deleteChild(childId);
-            if (children.length <= 1) {
-              setShowModal(false);
+          onPress: async () => {
+            try {
+              await deleteChild(childId);
+              // close modal after deletion
+              if (children.length <= 1) {
+                setShowModal(false);
+              }
+            } catch {
+              // error handled in context
             }
           },
         },
@@ -42,7 +47,16 @@ export const ChildSwitcher: React.FC<ChildSwitcherProps> = ({ navigation }) => {
 
   const handleAddNewChild = () => {
     setShowModal(false);
-    navigation.navigate('CreateAvatar');
+    Alert.alert('Parent access', 'Please log in as a parent to add a new child.', [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Log in',
+        onPress: () => navigation.navigate('Login', { redirectTo: 'ProfileSetup', parentAccess: true }),
+      },
+    ]);
   };
 
   if (children.length === 0) return null;

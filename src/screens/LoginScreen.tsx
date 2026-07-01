@@ -23,13 +23,15 @@ interface LoginScreenProps {
   navigation: any;
 }
 
-export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
+export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, route }: any) => {
   const [mode, setMode] = useState<'signup' | 'login'>('signup');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const { registerUser, loginUser, isLoading, isOnline, error, clearError } = useApp();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = async () => {
     clearError();
@@ -56,7 +58,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         const message = e instanceof ApiError ? e.message : 'Registration failed';
         Alert.alert('Sign up failed', message);
       }
-    } else {
+      } else {
       const trimmedEmail = email.trim();
       if (!trimmedEmail || !password) {
         Alert.alert('Missing information', 'Please enter your email and password.');
@@ -66,6 +68,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       const result = await loginUser(trimmedEmail, password);
       if (!result.success) {
         Alert.alert('Login failed', error || 'Email or password is incorrect.');
+        } else {
+          const redirect = route?.params?.redirectTo;
+          if (redirect) {
+            try {
+              navigation.navigate(redirect);
+            } catch {
+              navigation.navigate('Home');
+            }
+          }
       }
     }
   };
@@ -119,25 +130,46 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
             autoComplete="email"
             editable={!isLoading}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            placeholderTextColor={colors.textLight}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            editable={!isLoading}
-          />
-          {mode === 'signup' && (
+          <View style={styles.passwordRow}>
             <TextInput
-              style={styles.input}
-              placeholder="Confirm password"
+              style={[styles.input, { flex: 1 }]}
+              placeholder="Password"
               placeholderTextColor={colors.textLight}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
               editable={!isLoading}
             />
+            <TouchableOpacity
+              onPress={() => setShowPassword(v => !v)}
+              style={styles.passwordToggle}
+            >
+              <Text>{showPassword ? '👁️' : '🙈'}</Text>
+            </TouchableOpacity>
+          </View>
+          {mode === 'signup' && (
+            <View style={styles.passwordRow}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder="Confirm password"
+                placeholderTextColor={colors.textLight}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showConfirmPassword}
+                editable={!isLoading}
+              />
+              <TouchableOpacity
+                onPress={() => setShowConfirmPassword(v => !v)}
+                style={styles.passwordToggle}
+              >
+                <Text>{showConfirmPassword ? '👁️' : '🙈'}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          {mode === 'login' && (
+            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+              <Text style={{ color: colors.accent, marginTop: spacing.sm, textAlign: 'right' }}>Forgot password?</Text>
+            </TouchableOpacity>
           )}
         </View>
 
@@ -230,5 +262,13 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.accent,
     textAlign: 'center',
+  },
+  passwordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  passwordToggle: {
+    marginLeft: spacing.sm,
+    padding: spacing.xs,
   },
 });

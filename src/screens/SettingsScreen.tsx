@@ -6,7 +6,6 @@ import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 import { useApp } from '../context/AppContext';
-import { API_URL } from '../services/api';
 
 export const SettingsScreen: React.FC = () => {
   const { currentUser, logout, isOnline } = useApp();
@@ -50,9 +49,6 @@ export const SettingsScreen: React.FC = () => {
             </Text>
           </View>
         </View>
-        <Text style={styles.apiUrl} numberOfLines={1}>
-          {API_URL}
-        </Text>
       </View>
 
       <View style={styles.card}>
