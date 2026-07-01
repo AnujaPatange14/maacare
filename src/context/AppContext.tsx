@@ -181,11 +181,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setIsLoading(true);
     setError(null);
     try {
-     const { child } = await api.createChild(authToken, profileData);
-
-await loadChildren(authToken);
-
-await setCurrentChildId(child.id);
+      const { child } = await api.createChild(authToken, profileData);
+      setChildrenList(prev => [...prev, child as ChildProfile]);
+      await setCurrentChildId(child.id);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Failed to add child');
       throw e;
@@ -211,11 +209,17 @@ await setCurrentChildId(child.id);
     if (!authToken) return;
     setIsLoading(true);
     try {
-       await api.deleteChild(authToken, id);
-
-  // Reload children from the server
-  await loadChildren(authToken);
-
+      await api.deleteChild(authToken, id);
+      setChildrenList(prev => {
+        const filtered = prev.filter(child => child.id !== id);
+        if (id === currentChildId) {
+          const nextId = filtered.length > 0 ? filtered[0].id : null;
+          setCurrentChildIdState(nextId);
+          if (nextId) AsyncStorage.setItem(CURRENT_CHILD_KEY, nextId);
+          else AsyncStorage.removeItem(CURRENT_CHILD_KEY);
+        }
+        return filtered;
+      });
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Failed to delete child');
     } finally {
