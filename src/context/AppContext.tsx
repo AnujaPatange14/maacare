@@ -181,9 +181,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setIsLoading(true);
     setError(null);
     try {
-      const { child } = await api.createChild(authToken, profileData);
-      setChildrenList(prev => [...prev, child as ChildProfile]);
-      await setCurrentChildId(child.id);
+     const { child } = await api.createChild(authToken, profileData);
+
+await loadChildren(authToken);
+
+await setCurrentChildId(child.id);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Failed to add child');
       throw e;
@@ -209,17 +211,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!authToken) return;
     setIsLoading(true);
     try {
-      await api.deleteChild(authToken, id);
-      setChildrenList(prev => {
-        const filtered = prev.filter(child => child.id !== id);
-        if (id === currentChildId) {
-          const nextId = filtered.length > 0 ? filtered[0].id : null;
-          setCurrentChildIdState(nextId);
-          if (nextId) AsyncStorage.setItem(CURRENT_CHILD_KEY, nextId);
-          else AsyncStorage.removeItem(CURRENT_CHILD_KEY);
-        }
-        return filtered;
-      });
+       await api.deleteChild(authToken, id);
+
+  // Reload children from the server
+  await loadChildren(authToken);
+
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Failed to delete child');
     } finally {
@@ -314,37 +310,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const loginUser = async (email: string, password: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const { token, user } = await api.login(email, password);
-      await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
-      setAuthToken(token);
-      setCurrentUser(user);
-      setLoggedIn(true);
-      const { children: loaded } = await api.getChildren(token);
-      setChildrenList(loaded as ChildProfile[]);
+ const loginUser = async (email: string, password: string) => {
+  setIsLoading(true);
+  setError(null);
 
-      const storedChildId = await AsyncStorage.getItem(CURRENT_CHILD_KEY);
-      const validChild = loaded.find(c => c.id === storedChildId);
-      if (validChild) {
-        setCurrentChildIdState(validChild.id);
-      } else if (loaded.length > 0) {
-        setCurrentChildIdState(loaded[0].id);
-        await AsyncStorage.setItem(CURRENT_CHILD_KEY, loaded[0].id);
-      } else {
-        setCurrentChildIdState(null);
-      }
+  try {
+    const { token, user } = await api.login(email, password);
 
-      return { success: true, hasChildren: loaded.length > 0 };
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Login failed');
-      return { success: false, hasChildren: false };
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
+
+    setAuthToken(token);
+    setCurrentUser(user);
+    setLoggedIn(true);
+
+    // Load children and restore selected child
+    await loadChildren(token);
+
+    return {
+      success: true,
+      hasChildren: true, // we'll improve this later if needed
+    };
+  } catch (e) {
+    setError(e instanceof ApiError ? e.message : 'Login failed');
+
+    return {
+      success: false,
+      hasChildren: false,
+    };
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const logout = async () => {
     await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, CURRENT_CHILD_KEY]);
